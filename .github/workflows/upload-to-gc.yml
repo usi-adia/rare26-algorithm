@@ -1,0 +1,21 @@
+# Upload a built release image to the Grand Challenge algorithm via gcapi. Needs repo secret GC_TOKEN.
+name: upload-to-gc
+on:
+  workflow_dispatch:
+    inputs:
+      tag: { description: "Release tag whose assets to upload", required: true, default: "v1" }
+      algorithm: { description: "Grand Challenge algorithm slug", required: true, default: "rare26-endoscopy-ensemble" }
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and reassemble image
+        env: { GH_TOKEN: "${{ github.token }}", TAG: "${{ inputs.tag }}" }
+        run: |
+          gh release download "$TAG" -p 'rare26-algorithm.tar.gz.part-*'
+          cat rare26-algorithm.tar.gz.part-* > rare26-algorithm.tar.gz && rm rare26-algorithm.tar.gz.part-*
+          ls -lh rare26-algorithm.tar.gz
+      - name: Upload to Grand Challenge
+        env: { GC_TOKEN: "${{ secrets.GC_TOKEN }}" }
+        run: pip install -q gcapi && python upload_to_gc.py rare26-algorithm.tar.gz "${{ inputs.algorithm }}"

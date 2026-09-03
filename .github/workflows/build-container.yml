@@ -1,0 +1,30 @@
+# CI canary: build the container on every v* tag so a broken Dockerfile is caught before the upload.
+name: build-container
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+      - name: Free disk space
+        run: sudo rm -rf /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/share/dotnet /opt/ghc || true
+      - name: Build image
+        run: docker build --platform=linux/amd64 --tag rare26-algorithm . && docker image ls rare26-algorithm
+      - name: Smoke test on a synthetic stack
+        run: |
+          pip install -q SimpleITK numpy pillow
+          python tools/make_test_input.py test/input/interface_0/images/stacked-barretts-esophagus-endoscopy
+          mkdir -p -m o+rwX test/output/interface_0
+          docker run --rm --platform=linux/amd64 --network none \
+            -v "$PWD/test/input/interface_0":/input:ro -v "$PWD/test/output/interface_0":/output rare26-algorithm
+          python -c "import json;d=json.load(open('test/output/interface_0/stacked-neoplastic-lesion-likelihoods.json'));assert len(d)==6 and all(0<=p<=1 for p in d),d;print('OK',d)"
+      - name: Save image
+        run: docker save rare26-algorithm | gzip -c > rare26-algorithm.tar.gz && ls -lh rare26-algorithm.tar.gz && split -b 1900m rare26-algorithm.tar.gz rare26-algorithm.tar.gz.part-
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh release create "${GITHUB_REF_NAME}" rare26-algorithm.tar.gz.part-* --title "${GITHUB_REF_NAME}" --notes "container image" || gh release upload "${GITHUB_REF_NAME}" rare26-algorithm.tar.gz.part-* --clobber

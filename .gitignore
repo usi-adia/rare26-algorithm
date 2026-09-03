@@ -1,0 +1,7 @@
+data/
+test/output/
+test/input/interface_0/images/*/*.tif
+*.tar.gz
+*.tar.gz.part-*
+__pycache__/
+resources/*_oof.npy
