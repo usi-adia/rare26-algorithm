@@ -16,3 +16,5 @@ Training data: `TimJaspersTue/RARE25-train` (Hugging Face, CC-BY-NC-SA-4.0, gate
 (ImageNet / DINOv2) and, when available, GastroNet-5M (CC-BY-NC-4.0), all publicly licensed and disclosed.
 
 License: MIT.
+
+Grand Challenge algorithm: https://grand-challenge.org/algorithms/calibrated-cnn-vit-ensemble-for-barretts-neoplasia/ (linked to this repo; every `v*` tag triggers a container build there).

@@ -15,6 +15,7 @@ jobs:
       - name: Build image
         run: docker build --platform=linux/amd64 --tag rare26-algorithm . && docker image ls rare26-algorithm
       - name: Smoke test on a synthetic stack
+        if: hashFiles('resources/ensemble.json') != ''
         run: |
           pip install -q SimpleITK numpy pillow
           python tools/make_test_input.py test/input/interface_0/images/stacked-barretts-esophagus-endoscopy
